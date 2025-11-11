@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -40,45 +41,44 @@
                     android:textSize="15sp"
                     android:layout_marginTop="15dp"/>
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="140dp"
+                android:layout_height="120dp"
                 android:layout_weight="2"
                 android:orientation="vertical">
                 <ImageButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:src="@drawable/baseline_mail_outline_24"
-                    android:background="@drawable/button_radius"/>
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="7dp"
+                    android:background="@drawable/button_radius"
+                    android:src="@drawable/baseline_mail_outline_24" />
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="20dp"
                     android:text="문의"
-                    android:layout_weight="1"
                     android:textSize="15sp"
                     android:textAlignment="center"
-                    android:layout_marginTop="5dp"/>
+                    android:layout_marginTop="13dp"/>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="140dp"
+                android:layout_height="120dp"
                 android:layout_weight="2"
                 android:orientation="vertical">
                 <ImageButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="7dp"
                     android:background="@color/material_on_background_disabled"
                     android:src="@drawable/location"/>
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="20dp"
                     android:text="현재위치"
-                    android:layout_weight="1"
                     android:textSize="15sp"
                     android:textAlignment="center"
-                    android:layout_marginTop="5dp"/>
+                    android:layout_marginTop="13dp"/>
             </LinearLayout>
         </LinearLayout>
 
@@ -88,30 +88,75 @@
             android:orientation="horizontal"
             android:layout_margin="10dp"
             android:background="@drawable/radius">
-                <EditText
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textField"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:autofillHints="역 검색"
-                    android:inputType="text"
-                    android:textSize="20sp"
-                    tools:ignore="LabelFor" />
+                    android:layout_margin="10dp"
+                    app:endIconMode="clear_text">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+                </com.google.android.material.textfield.TextInputLayout>
                 <ImageButton
                     android:src="@drawable/search_button"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_weight="4"
                     android:layout_marginTop="10dp"
-                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="10dp"
                     android:background="@drawable/button_radius"/>
         </LinearLayout>
-        <TextView
+
+        <LinearLayout
             android:layout_margin="10dp"
             android:layout_width="match_parent"
             android:layout_height="550dp"
-            android:text="승강기 정보"
             android:background="@drawable/radius"
-            android:textSize="20sp" />
+            android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:text="현재위치"
+                    android:textSize="45sp"
+                    android:textAlignment="viewStart"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginTop="50dp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:textAlignment="viewStart"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginTop="50dp">
+                    <ImageButton
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:background="@drawable/station_button"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:text="번 출구"
+                        android:textSize="45sp"
+                        android:textAlignment="viewStart" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:text="승강기 수리중"
+                    android:textSize="45sp"
+                    android:textAlignment="viewStart"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginTop="50dp"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:text="자료제공 : 서울교통공사"
+                    android:textSize="15sp"
+                    android:textAlignment="textEnd"
+                    android:layout_marginEnd="30dp"
+                    android:layout_marginTop="40dp"/>
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
