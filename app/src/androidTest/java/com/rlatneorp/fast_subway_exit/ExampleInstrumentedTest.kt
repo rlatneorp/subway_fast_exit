@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.fast_subway_exit", appContext.packageName)
+        assertEquals("com.rlatneorp.fast_subway_exit", appContext.packageName)
     }
 }

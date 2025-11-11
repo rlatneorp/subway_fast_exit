@@ -10,7 +10,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.fast_subway_exit"
+        applicationId = "com.rlatneorp.fast_subway_exit"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
