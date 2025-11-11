@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fast_subway_exit"
+    namespace = "com.rlatneorp.fast_subway_exit"
     compileSdk {
         version = release(36)
     }
@@ -29,11 +29,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
 }
 

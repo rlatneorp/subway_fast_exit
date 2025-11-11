@@ -1,4 +1,4 @@
-package com.example.fast_subway_exit
+package com.rlatneorp.fast_subway_exit
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

@@ -1,4 +1,4 @@
-package com.example.fast_subway_exit
+package com.rlatneorp.fast_subway_exit
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
