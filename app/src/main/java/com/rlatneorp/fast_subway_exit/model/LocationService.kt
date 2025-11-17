@@ -10,6 +10,19 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+
+private class OneTimeLocationCallback(
+    private val continuation: CancellableContinuation<Location>
+) : LocationCallback() {
+    override fun onLocationResult(locationResult: LocationResult) {
+        if (locationResult.lastLocation != null) {
+            continuation.resume(locationResult.lastLocation!!)
+            return
+        }
+        continuation.resumeWithException(IllegalAccessException("지역정보를 얻는데 실패하였습니다."))
+    }
+}
+
 class LocationService(context: Context) {
 
     private val fusedLocationClient: FusedLocationProviderClient =
@@ -20,7 +33,10 @@ class LocationService(context: Context) {
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             if (location != null) {
                 continuation.resume(location)
-            } else {
+                return@addOnSuccessListener
+            }
+
+            if (location == null) {
                 requestNewLocation(continuation)
             }
         }.addOnFailureListener {
@@ -34,15 +50,7 @@ class LocationService(context: Context) {
             .setMaxUpdates(1)
             .build()
 
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let {
-                    continuation.resume(it)
-                    return
-                }
-                continuation.resumeWithException(Exception("지역 정보를 얻는데 실패하였습니다."))
-            }
-        }
+        val locationCallback = OneTimeLocationCallback(continuation)
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
 
