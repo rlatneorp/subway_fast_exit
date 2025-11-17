@@ -10,7 +10,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-
 private class OneTimeLocationCallback(
     private val continuation: CancellableContinuation<Location>
 ) : LocationCallback() {
