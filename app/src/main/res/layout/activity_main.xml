@@ -6,7 +6,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".view.MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -96,11 +96,13 @@
                     android:layout_margin="10dp"
                     app:endIconMode="clear_text">
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputSearchText"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
                 </com.google.android.material.textfield.TextInputLayout>
                 <ImageButton
                     android:src="@drawable/search_button"
+                    android:id="@+id/searchButton"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_weight="4"
@@ -118,6 +120,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
+                    android:id="@+id/locationInfo"
                     android:text="현재위치"
                     android:textSize="45sp"
                     android:textAlignment="viewStart"
@@ -143,6 +146,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
+                    android:id="@+id/elevatorInfo"
                     android:text="승강기 수리중"
                     android:textSize="45sp"
                     android:textAlignment="viewStart"
