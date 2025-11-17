@@ -48,6 +48,7 @@
                 android:layout_weight="2"
                 android:orientation="vertical">
                 <ImageButton
+                    android:id="@+id/mailButton"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_marginStart="7dp"
@@ -67,6 +68,7 @@
                 android:layout_weight="2"
                 android:orientation="vertical">
                 <ImageButton
+                    android:id="@+id/currentLocationButton"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_marginStart="7dp"
@@ -95,10 +97,11 @@
                     android:layout_weight="1"
                     android:layout_margin="10dp"
                     app:endIconMode="clear_text">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/inputSearchText"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                        android:layout_height="match_parent" />
                 </com.google.android.material.textfield.TextInputLayout>
                 <ImageButton
                     android:src="@drawable/search_button"

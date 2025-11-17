@@ -17,7 +17,7 @@ class StationRepository(context: Context) {
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception("API 에러: ${response.message()}"))
+                Result.failure(IllegalAccessException("API 에러: ${response.message()}"))
             }
 
         } catch (e: Exception) {
@@ -32,7 +32,7 @@ class StationRepository(context: Context) {
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception("API 에러: ${response.message()}"))
+                Result.failure(IllegalAccessException("API 에러: ${response.message()}"))
             }
 
         } catch (e: Exception) {
