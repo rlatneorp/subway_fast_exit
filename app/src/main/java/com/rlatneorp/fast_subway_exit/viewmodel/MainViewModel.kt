@@ -27,17 +27,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         viewModelScope.launch {
             val result = repository.getElevatorInfoForCurrentLocation()
-            result.fold(
-                onSuccess = { status ->
-                    _elevatorInfo.value = status
-                    _currentLocationName.value = status.stationName
-                },
-                onFailure = { e ->
-                    _errorMessage.value = Event("위치 또는 승강기 정보를 가져오는데 실패했습니다: ${e.message}")
-                    _currentLocationName.value = "위치 정보 없음"
-                }
-            )
-            _isLoading.value = false
+            handleFetchResult(result, isLocationBased = true)
         }
     }
 
@@ -45,20 +35,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         viewModelScope.launch {
             val result = repository.searchElevatorInfoByStation(stationName)
-            result.fold(
-                onSuccess = { status ->
-                    _elevatorInfo.value = status
-                    _currentLocationName.value = status.stationName
-                },
-                onFailure = { e ->
-                    _errorMessage.value = Event("검색 실패: ${e.message}")
-                }
-            )
-            _isLoading.value = false
+            handleFetchResult(result, isLocationBased = false)
         }
     }
 
     fun onInquiryClicked() {
         _navigateToEmail.value = Event(Unit)
+    }
+    private fun handleFetchResult(result: Result<ElevatorStatus>, isLocationBased: Boolean) {
+        result.fold(
+            onSuccess = { status ->
+                updateStateOnSuccess(status)
+            },
+            onFailure = { e ->
+                updateStateOnFailure(e, isLocationBased)
+            }
+        )
+        _isLoading.value = false
+    }
+
+    private fun updateStateOnSuccess(status: ElevatorStatus) {
+        _elevatorInfo.value = status
+        _currentLocationName.value = status.stationName
+    }
+
+    private fun updateStateOnFailure(e: IllegalAccessException, isLocationBased: Boolean) {
+        var errorMessage = "검색 실패: ${e.message}"
+        if (isLocationBased) {
+            errorMessage = "위치 또는 승강기 정보를 가져오는데 실패했습니다: ${e.message}"
+        }
+        _errorMessage.value = Event(errorMessage)
+        if (isLocationBased) {
+            _currentLocationName.value = "위치 정보 없음"
+        }
     }
 }

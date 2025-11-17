@@ -28,18 +28,7 @@ class MainActivity : AppCompatActivity() {
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        // (로직이 내부에 있음)
-        when {
-            permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                viewModel.fetchInfoForCurrentLocation()
-            }
-            permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                viewModel.fetchInfoForCurrentLocation()
-            }
-            else -> {
-                Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
-            }
-        }
+        handleLocationPermissionResult(permissions)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,14 +59,10 @@ class MainActivity : AppCompatActivity() {
             // progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
         viewModel.errorMessage.observe(this) { event ->
-            event.getContentIfNotHandled()?.let { message ->
-                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-            }
+            handleErrorMessage(event)
         }
         viewModel.navigateToEmail.observe(this) { event ->
-            event.getContentIfNotHandled()?.let {
-                sendEmailInquiry()
-            }
+            handleEmailNavigation(event)
         }
     }
 
@@ -97,31 +82,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkLocationPermissionAndLoadData() {
-        when {
-            ContextCompat.checkSelfPermission(
+        if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                viewModel.fetchInfoForCurrentLocation()
-            }
-
-            shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> {
-                Toast.makeText(this, "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다.", Toast.LENGTH_LONG).show()
-                locationPermissionRequest.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                )
-            }
-            else -> {
-                locationPermissionRequest.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                ))
-            }
+            ) == PackageManager.PERMISSION_GRANTED) {
+            viewModel.fetchInfoForCurrentLocation()
+            return
         }
+
+        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            Toast.makeText(this, "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다.", Toast.LENGTH_LONG).show()
+            locationPermissionRequest.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+            return
+        }
+
+        locationPermissionRequest.launch(arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ))
     }
 
     private fun sendEmailInquiry() {
@@ -131,10 +112,37 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_SUBJECT, "승강기 앱 문의")
             putExtra(Intent.EXTRA_TEXT, "문의 내용을 입력하세요:")
         }
+
         if (emailIntent.resolveActivity(packageManager) != null) {
             startActivity(emailIntent)
-        } else {
-            Toast.makeText(this, "이메일 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(this, "이메일 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleLocationPermissionResult(permissions: Map<String, Boolean>) {
+        if (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)) {
+            viewModel.fetchInfoForCurrentLocation()
+            return
+        }
+
+        if (permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)) {
+            viewModel.fetchInfoForCurrentLocation()
+            return
+        }
+        showToast("위치 권한이 필요합니다.")
+    }
+
+    private fun handleErrorMessage(event: Event<String>) {
+        event.getContentIfNotHandled()?.let { message ->
+            showToast(message)
+        }
+    }
+
+    private fun handleEmailNavigation(event: Event<Unit>) {
+        event.getContentIfNotHandled()?.let {
+            sendEmailInquiry()
         }
     }
 

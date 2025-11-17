@@ -13,30 +13,28 @@ class StationRepository(context: Context) {
         return try {
             val location = locationService.getCurrentLocation()
             val response = apiService.getElevatorStatusByLocation(location.latitude, location.longitude)
+            handleApiResponse(response) // (로직 추출)
 
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(IllegalAccessException("API 에러: ${response.message()}"))
-            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun searchElevatorInfoByStation(stationName: String): Result<ElevatorStatus> {
+        return try {
+            val response = apiService.getElevatorInfoByName(stationName)
+
+            handleApiResponse(response) // (로직 추출)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun searchElevatorInfoByStation(stationName: String): Result<ElevatorStatus> {
-        return try {
-            val response = apiService.getElevatorInfoByName(stationName)
-
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(IllegalAccessException("API 에러: ${response.message()}"))
-            }
-
-        } catch (e: Exception) {
-            Result.failure(e)
+    private fun handleApiResponse(response: Response<ElevatorStatus>): Result<ElevatorStatus> {
+        if (response.isSuccessful && response.body() != null) {
+            return Result.success(response.body()!!)
         }
+
+        return Result.failure(IllegalAccessException("API Error: ${response.message()}"))
     }
 }
