@@ -28,7 +28,6 @@ class LocationService(context: Context) {
         }
     }
 
-
     @SuppressLint("MissingPermission")
     private fun requestNewLocation(continuation: CancellableContinuation<Location>) {
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000L)
