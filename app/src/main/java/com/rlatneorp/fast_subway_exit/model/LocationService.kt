@@ -24,7 +24,7 @@ private class OneTimeLocationCallback(
             return
         }
 
-        continuation.resumeWithException(Exception("Failed to get location"))
+        continuation.resumeWithException(Exception("지역정보 얻기를 실패하였습니다."))
     }
 }
 
@@ -38,7 +38,6 @@ private class FlowLocationCallback(
         }
     }
 }
-
 
 class LocationService(context: Context) {
 
@@ -64,10 +63,7 @@ class LocationService(context: Context) {
             continuation.resume(location)
             return
         }
-
-        if (location == null) {
-            requestNewLocation(continuation)
-        }
+        requestNewLocation(continuation)
     }
 
     @SuppressLint("MissingPermission")

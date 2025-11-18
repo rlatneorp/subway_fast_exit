@@ -1,11 +1,11 @@
 package com.rlatneorp.fast_subway_exit.view
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
+import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -13,14 +13,15 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rlatneorp.fast_subway_exit.R
+import com.rlatneorp.fast_subway_exit.model.ElevatorRow
 import com.rlatneorp.fast_subway_exit.viewmodel.Event
 import com.rlatneorp.fast_subway_exit.viewmodel.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
-import com.rlatneorp.fast_subway_exit.model.ElevatorRow
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,15 +58,11 @@ class MainActivity : AppCompatActivity() {
         initialLayout = findViewById(R.id.initialLayout)
         initialMessageText = findViewById(R.id.initialMessageText)
         rvElevatorList = findViewById(R.id.rvElevatorList)
-
         stationNameResult = findViewById(R.id.stationNameResult)
 
         setupRecyclerView()
-
         setupObservers()
-
         setupClickListeners(mailButton, currentLocationButton)
-
         checkLocationPermission()
     }
 
@@ -78,6 +75,12 @@ class MainActivity : AppCompatActivity() {
     private fun setupObservers() {
         viewModel.elevatorInfo.observe(this) { elevatorList ->
             handleElevatorInfoUpdate(elevatorList)
+        }
+
+        viewModel.allElevatorsWorking.observe(this) { isAllWorking ->
+            if (isAllWorking) {
+                showAllWorkingMessage()
+            }
         }
 
         viewModel.currentLocationName.observe(this) { name ->
@@ -104,24 +107,31 @@ class MainActivity : AppCompatActivity() {
             rvElevatorList.visibility = View.VISIBLE
             initialLayout.visibility = View.GONE
             stationNameResult.visibility = View.VISIBLE
-
             elevatorAdapter.submitList(elevatorList)
             return
         }
 
         rvElevatorList.visibility = View.GONE
-        stationNameResult.visibility = View.GONE
-        initialLayout.visibility = View.VISIBLE
+    }
 
-        updateInitialMessage()
+    private fun showAllWorkingMessage() {
+        loadingLayout.visibility = View.GONE
+        rvElevatorList.visibility = View.GONE
+        initialLayout.visibility = View.VISIBLE
+        stationNameResult.visibility = View.VISIBLE
+
+        initialMessageText.text = "현재 모든 승강기가 정상 운행 중입니다. \uD83D\uDE0A"
+        initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
     }
 
     private fun updateInitialMessage() {
         if (viewModel.currentLocationName.value == "검색 결과 없음") {
             initialMessageText.text = "검색 결과가 없습니다."
+            initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
             return
         }
         initialMessageText.text = "역 이름을 검색하거나 현재 위치를 찾아보세요."
+        initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
     }
 
     private fun handleLoadingUpdate(isLoading: Boolean) {
@@ -182,7 +192,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            Toast.makeText(this, "현재 위치 기능을 위해 위치 권단이 필요합니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "현재 위치 기능을 위해 위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
         }
 
         locationPermissionRequest.launch(arrayOf(
@@ -194,7 +204,7 @@ class MainActivity : AppCompatActivity() {
     private fun sendEmailInquiry() {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:")
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("contact@example.com"))
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("rlatneorp@gmail.com"))
             putExtra(Intent.EXTRA_SUBJECT, "승강기 앱 문의")
             putExtra(Intent.EXTRA_TEXT, "문의 내용을 입력하세요:")
         }
@@ -213,7 +223,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-
         if (permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)) {
             showToast("위치 권한이 승인되었습니다.")
             return
@@ -229,6 +238,7 @@ class MainActivity : AppCompatActivity() {
             initialLayout.visibility = View.VISIBLE
             rvElevatorList.visibility = View.GONE
             stationNameResult.visibility = View.GONE
+            updateInitialMessage()
         }
     }
 

@@ -4,34 +4,53 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="20dp"
     android:layout_marginBottom="8dp"
-    android:background="@drawable/radius">
-    <!-- radius.xml (기존 파일) 재사용 -->
+    android:gravity="start">
 
-    <TextView
-        android:id="@+id/tvFacilityName"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="승강기명: OOO"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/tvLocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="설치위치: OOO"
-        android:textSize="16sp"
-        android:layout_marginTop="4dp"/>
+        <LinearLayout
+            android:id="@+id/llBadges"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="출입구"
+            android:textSize="28sp"
+            android:textColor="#000000"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="12dp" />
 
     <TextView
         android:id="@+id/tvRunStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="운행상태: OOO"
-        android:textSize="16sp"
-        android:layout_marginTop="4dp"
-        android:textStyle="italic"/>
+        android:text="승강기 보수중"
+        android:textSize="40sp"
+        android:textColor="#000000"
+        android:textStyle="normal"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tvFacilityName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
 </LinearLayout>

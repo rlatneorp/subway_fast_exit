@@ -1,84 +1,107 @@
 package com.rlatneorp.fast_subway_exit.model
 
 import android.content.Context
+import com.rlatneorp.fast_subway_exit.BuildConfig
 import com.rlatneorp.fast_subway_exit.model.network.ApiService
+import com.rlatneorp.fast_subway_exit.model.network.KakaoApiService
 import com.rlatneorp.fast_subway_exit.model.network.RetrofitClient
 import retrofit2.Response
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
-
-private data class StationCoords(val name: String, val lat: Double, val lon: Double)
 
 class StationRepository(context: Context) {
 
-    private val apiService: ApiService = RetrofitClient.instance
+    private val seoulApiService: ApiService = RetrofitClient.instance
+    private val kakaoApiService: KakaoApiService = KakaoApiService.create()
     private val locationService: LocationService = LocationService(context.applicationContext)
-
-    private val API_KEY = "여기에_인증키를_붙여넣으세요"
-
-    private val stationCoordsList = listOf(
-        StationCoords("서울역", 37.554690, 126.972559),
-        StationCoords("강남역", 37.497946, 127.027627),
-        StationCoords("홍대입구역", 37.556846, 126.923769),
-        StationCoords("시청역", 37.565709, 126.977098),
-        StationCoords("잠실역", 37.513271, 127.100021),
-        StationCoords("신설동역", 37.575300, 127.025175)
-    )
+    private val SEOUL_API_KEY = BuildConfig.SEOUL_API_KEY
 
     suspend fun getElevatorInfoForCurrentLocation(): Result<List<ElevatorRow>> {
         return try {
             val location = locationService.getCurrentLocation()
+            val longitude = location.longitude.toString()
+            val latitude = location.latitude.toString()
 
-            val closestStationName = findClosestStation(location.latitude, location.longitude)
+            val kakaoResponse = kakaoApiService.searchSubwayStationByCategory(
+                longitude = longitude,
+                latitude = latitude
+            )
 
-            searchElevatorInfoByName(closestStationName)
+            if (!kakaoResponse.isSuccessful || kakaoResponse.body() == null) {
+                throw Exception("Kakao API Error: ${kakaoResponse.message()}")
+            }
+
+            val nearbyPlaces = kakaoResponse.body()!!.documents
+            val closestStation = nearbyPlaces.firstOrNull()
+
+            if (closestStation == null) {
+                return Result.failure(Exception("주변에 지하철역을 찾을 수 없습니다."))
+            }
+
+            val stationName = extractStationName(closestStation.placeName)
+
+            searchElevatorInfoByName(stationName)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun extractStationName(fullStationName: String): String {
+        if (!fullStationName.contains("역")) {
+            return fullStationName
+        }
+
+        var name = fullStationName.substringBefore("역") + "역"
+
+        if (name.contains("(")) {
+            name = name.substringBefore("(")
+        }
+        return name
     }
 
     suspend fun searchElevatorInfoByName(stationName: String): Result<List<ElevatorRow>> {
         return try {
-            val response = apiService.getSubwayElevatorInfo(API_KEY, stationName)
 
-            handleApiResponse(response)
+            val query = stationName.trim().removeSuffix("역")
+
+            val response = seoulApiService.getSubwayElevatorInfoByName(SEOUL_API_KEY, 1, 1000, query)
+
+            handleSeoulApiResponse(response, query)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    private fun handleApiResponse(response: Response<ElevatorApiResponse>): Result<List<ElevatorRow>> {
-        if (response.isSuccessful && response.body() != null) {
-            val elevatorList = response.body()!!.seoulMetroFaciInfo.row
-            return Result.success(elevatorList)
+    private fun handleSeoulApiResponse(
+        response: Response<ElevatorApiResponse>,
+        query: String
+    ): Result<List<ElevatorRow>> {
+        if (!response.isSuccessful || response.body() == null) {
+            return Result.failure(Exception("API Error: ${response.message()}"))
         }
 
-        return Result.failure(Exception("API Error: ${response.message()}"))
+        val allList = response.body()!!.seoulMetroFaciInfo.row
+
+        return filterAndValidateList(allList, query)
     }
 
-    private fun findClosestStation(userLat: Double, userLon: Double): String {
-        if (stationCoordsList.isEmpty()) return "서울역"
+    private fun filterAndValidateList(
+        allList: List<ElevatorRow>,
+        query: String
+    ): Result<List<ElevatorRow>> {
 
-        return stationCoordsList.minByOrNull { station ->
-            calculateDistance(userLat, userLon, station.lat, station.lon)
-        }?.name ?: "서울역"
-    }
+        val filteredList = allList.filter { item ->
+            item.stationName.contains(query)
+        }
 
-    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371
+        if (filteredList.isNotEmpty()) {
+            return Result.success(filteredList)
+        }
 
-        val latDistance = Math.toRadians(lat2 - lat1)
-        val lonDistance = Math.toRadians(lon2 - lon1)
-        val a = sin(latDistance / 2).pow(2) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(lonDistance / 2).pow(2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        if (allList.isNotEmpty()) {
+            return Result.failure(Exception("검색 결과가 없습니다."))
+        }
 
-        return R * c
+        return Result.success(emptyList())
     }
 }

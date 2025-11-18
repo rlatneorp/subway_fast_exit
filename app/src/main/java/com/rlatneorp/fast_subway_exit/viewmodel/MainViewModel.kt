@@ -28,6 +28,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _navigateToEmail = MutableLiveData<Event<Unit>>()
     val navigateToEmail: LiveData<Event<Unit>> = _navigateToEmail
 
+    private val _allElevatorsWorking = MutableLiveData<Boolean>(false)
+    val allElevatorsWorking: LiveData<Boolean> = _allElevatorsWorking
+
 
     fun fetchInfoForCurrentLocation() {
         _isLoading.value = true
@@ -57,31 +60,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun handleFetchResult(result: Result<List<ElevatorRow>>, isLocationBased: Boolean) {
         result.fold(
             onSuccess = { elevatorList ->
-
                 updateStateOnSuccess(elevatorList)
             },
             onFailure = { e ->
-
                 updateStateOnFailure(e as IllegalAccessException, isLocationBased)
             }
         )
         _isLoading.value = false
     }
 
-    private fun updateStateOnSuccess(elevatorList: List<ElevatorRow>) {
-        _elevatorInfo.value = elevatorList
+    private fun updateStateOnSuccess(allList: List<ElevatorRow>) {
+        val rawStationName = allList.firstOrNull()?.stationName
 
-        val stationName = elevatorList.firstOrNull()?.stationName
-
-        if (stationName != null) {
-            _currentLocationName.value = stationName
+        if (rawStationName == null) {
+            _currentLocationName.value = "검색 결과 없음"
+            _elevatorInfo.value = emptyList()
+            _allElevatorsWorking.value = false
             return
         }
-
-        _currentLocationName.value = "검색 결과 없음"
+        val cleanStationName = rawStationName.replace(Regex("\\(.*\\)"), "")
+        val maintenanceList = allList.filter { it.runStatus != "사용가능" }
+        if (maintenanceList.isNotEmpty()) {
+            _currentLocationName.value = "$cleanStationName(${maintenanceList.size}곳)"
+        } else {
+            _currentLocationName.value = cleanStationName
+        }
+        _elevatorInfo.value = maintenanceList
+        _allElevatorsWorking.value = maintenanceList.isEmpty()
     }
 
-    private fun updateStateOnFailure(e: IllegalAccessException, isLocationBased: Boolean) {
+    private fun updateStateOnFailure(e: Exception, isLocationBased: Boolean) {
         var errorMessage = "검색 실패: ${e.message}"
 
         if (isLocationBased) {
