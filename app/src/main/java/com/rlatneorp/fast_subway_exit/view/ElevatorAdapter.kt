@@ -16,28 +16,27 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.rlatneorp.fast_subway_exit.R
 import com.rlatneorp.fast_subway_exit.model.ElevatorRow
+import androidx.core.graphics.toColorInt
 
-private const val COLOR_BADGE_HEX = "#FF80AB"
+private const val COLOR_BADGE_BG = "#FF80AB"
+private const val COLOR_STATUS_REPAIR = "#E91E63"
+private const val COLOR_STATUS_OK = "#4CAF50"
+private const val COLOR_STATUS_DEFAULT = "#000000"
 private const val REGEX_NUMBER_PATTERN = "\\d+(?:-\\d+)?"
+private const val REGEX_DIRECTION_PATTERN = "\\S+\\s*방면"
 private const val TEXT_DEFAULT_LOCATION = "출입구"
 private const val TEXT_PREFIX_ELEVATOR = "승강기 "
-private const val KEYWORD_REPAIR = "보수"
-private const val KEYWORD_CHECK = "점검"
-private const val KEYWORD_FIX = "수리"
-private const val KEYWORD_ESCALATOR = "에스컬레이터"
-private const val KEYWORD_ELEVATOR = "엘리베이터"
-private const val KEYWORD_WHEELCHAIR = "휠체어"
-private const val KEYWORD_MOVING = "무빙"
-private const val DEFAULT_FACILITY = "승강기"
-
-private const val BADGE_HEIGHT_DP = 48f
-private const val BADGE_MIN_WIDTH_DP = 48f
-private const val BADGE_MARGIN_END_DP = 6f
-private const val BADGE_TEXT_SIZE_SP = 24f
-private const val BADGE_PADDING_DP = 8f
+private const val KEY_REPAIR = "보수"
+private const val KEY_CHECK = "점검"
+private const val KEY_FIX = "수리"
+private const val KEY_OK = "가능"
+private const val BADGE_H_DP = 40f
+private const val BADGE_MIN_W_DP = 40f
+private const val BADGE_MARGIN_DP = 6f
+private const val BADGE_TEXT_SP = 28f
+private const val BADGE_PAD_DP = 8f
 
 class ElevatorAdapter : ListAdapter<ElevatorRow, ElevatorViewHolder>(ElevatorDiffCallback()) {
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ElevatorViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_elevator, parent, false)
@@ -57,54 +56,50 @@ class ElevatorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
     fun bind(item: ElevatorRow) {
         bindRunStatus(item.runStatus)
+        bindFacility(item.facilityName)
         bindLocationInfo(item.location)
-        bindFacilityName(item.facilityName)
     }
 }
 
 class ElevatorDiffCallback : DiffUtil.ItemCallback<ElevatorRow>() {
-    override fun areItemsTheSame(old: ElevatorRow, new: ElevatorRow): Boolean {
-        return old.facilityName == new.facilityName && old.location == new.location
-    }
+    override fun areItemsTheSame(old: ElevatorRow, new: ElevatorRow) =
+        old.facilityName == new.facilityName && old.location == new.location
 
-    override fun areContentsTheSame(old: ElevatorRow, new: ElevatorRow): Boolean {
-        return old == new
-    }
+    override fun areContentsTheSame(old: ElevatorRow, new: ElevatorRow) = old == new
 }
 
 private fun ElevatorViewHolder.bindRunStatus(status: String) {
     runStatus.text = formatRunStatus(status)
-
-    if (isRepairing(status)) {
-        runStatus.setTextColor(Color.parseColor("#CA1A86"))
-    } else if (status.contains("가능")) {
-        runStatus.setTextColor(Color.parseColor("#4CAF50"))
-    } else {
-        runStatus.setTextColor(Color.BLACK)
-    }
-}
-
-private fun ElevatorViewHolder.bindFacilityName(rawName: String) {
-    facilityName.text = simplifyFacilityName(rawName)
-    facilityName.visibility = View.VISIBLE
-}
-
-private fun simplifyFacilityName(rawName: String): String {
-    if (rawName.contains(KEYWORD_ESCALATOR)) return KEYWORD_ESCALATOR
-    if (rawName.contains(KEYWORD_ELEVATOR)) return KEYWORD_ELEVATOR
-    if (rawName.contains(KEYWORD_WHEELCHAIR)) return "$KEYWORD_WHEELCHAIR 리프트"
-    if (rawName.contains(KEYWORD_MOVING)) return "$KEYWORD_MOVING 워크"
-    return DEFAULT_FACILITY
+    runStatus.setTextColor(getStatusColor(status))
 }
 
 private fun formatRunStatus(status: String): String {
+    if (isRepairing(status)) return status
     return status
 }
 
+private fun getStatusColor(status: String): Int {
+    if (isRepairing(status)) return Color.parseColor(COLOR_STATUS_REPAIR)
+    if (status.contains(KEY_OK)) return COLOR_STATUS_OK.toColorInt()
+    return COLOR_STATUS_DEFAULT.toColorInt()
+}
+
 private fun isRepairing(status: String): Boolean {
-    return status.contains(KEYWORD_REPAIR) ||
-            status.contains(KEYWORD_CHECK) ||
-            status.contains(KEYWORD_FIX)
+    return status.contains(KEY_REPAIR) ||
+            status.contains(KEY_CHECK) ||
+            status.contains(KEY_FIX)
+}
+
+private fun ElevatorViewHolder.bindFacility(rawName: String) {
+    facilityName.text = simplifyFacilityName(rawName)
+}
+
+private fun simplifyFacilityName(rawName: String): String {
+    if (rawName.contains("에스컬레이터")) return "에스컬레이터"
+    if (rawName.contains("엘리베이터")) return "엘리베이터"
+    if (rawName.contains("휠체어")) return "휠체어 리프트"
+    if (rawName.contains("무빙")) return "무빙워크"
+    return "승강기"
 }
 
 private fun ElevatorViewHolder.bindLocationInfo(loc: String) {
@@ -119,9 +114,8 @@ private fun ElevatorViewHolder.bindLocationInfo(loc: String) {
 }
 
 private fun extractNumbers(location: String): List<String> {
-    val numberRegex = Regex(REGEX_NUMBER_PATTERN)
-    val matches = numberRegex.findAll(location)
-    return matches.map { it.value }.toList()
+    val regex = Regex(REGEX_NUMBER_PATTERN)
+    return regex.findAll(location).map { it.value }.toList()
 }
 
 private fun ElevatorViewHolder.showNoBadgeState(loc: String) {
@@ -130,60 +124,69 @@ private fun ElevatorViewHolder.showNoBadgeState(loc: String) {
 }
 
 private fun ElevatorViewHolder.showBadgeState(numbers: List<String>, loc: String) {
-    addBadgesToContainer(itemView.context, badgeContainer, numbers)
+    addBadges(itemView.context, badgeContainer, numbers)
     badgeContainer.visibility = View.VISIBLE
     location.text = cleanLocationText(loc, numbers)
 }
 
 private fun cleanLocationText(original: String, numbers: List<String>): String {
     var text = original
-    numbers.forEach { text = text.replace(it, "") }
-    text = text.replace(",", "").replace("번", "").trim()
 
-    if (text.isBlank()) {
-        return TEXT_DEFAULT_LOCATION
-    }
+    numbers.forEach { text = text.replace(it, "") }
+    text = text.replace(Regex(REGEX_DIRECTION_PATTERN), "")
+    text = text.replace("번", "")
+        .replace("출입구", "")
+        .replace("출구", "")
+        .replace(",", "")
+        .trim()
+
+    if (text.isBlank()) return TEXT_DEFAULT_LOCATION
     return text
 }
 
-private fun addBadgesToContainer(ctx: Context, container: LinearLayout, numbers: List<String>) {
+private fun addBadges(ctx: Context, container: LinearLayout, numbers: List<String>) {
     for (num in numbers) {
-        val badge = createBadgeView(ctx, num)
-        container.addView(badge)
+        container.addView(createBadge(ctx, num))
     }
 }
 
-private fun createBadgeView(context: Context, text: String): TextView {
-    val badge = TextView(context)
-    setupBadgeLayout(context, badge)
-    setupBadgeStyle(badge)
+private fun createBadge(ctx: Context, text: String): TextView {
+    val badge = TextView(ctx)
+    applyBadgeLayout(ctx, badge)
+    applyBadgeStyle(badge)
     badge.text = text
     return badge
 }
 
-private fun setupBadgeLayout(context: Context, badge: TextView) {
-    val height = getPx(context, BADGE_HEIGHT_DP)
-    val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, height)
-    params.marginEnd = getPx(context, BADGE_MARGIN_END_DP)
+private fun applyBadgeLayout(ctx: Context, badge: TextView) {
+    val height = getPx(ctx, BADGE_H_DP)
+    val minWidth = getPx(ctx, BADGE_MIN_W_DP)
+    val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, height
+    )
+    params.marginEnd = getPx(ctx, BADGE_MARGIN_DP)
 
     badge.layoutParams = params
-    badge.minimumWidth = getPx(context, BADGE_MIN_WIDTH_DP)
+    badge.minimumWidth = minWidth
 
-    val padding = getPx(context, BADGE_PADDING_DP)
-    badge.setPadding(padding, 0, padding, 0)
+    val pad = getPx(ctx, BADGE_PAD_DP)
+    badge.setPadding(pad, 0, pad, 0)
 }
 
-private fun setupBadgeStyle(badge: TextView) {
+private fun applyBadgeStyle(badge: TextView) {
     badge.setBackgroundResource(R.drawable.station_button)
-    badge.backgroundTintList = ColorStateList.valueOf(Color.parseColor(COLOR_BADGE_HEX))
+    badge.backgroundTintList = ColorStateList.valueOf(
+        COLOR_BADGE_BG.toColorInt()
+    )
     badge.gravity = Gravity.CENTER
     badge.includeFontPadding = false
     badge.setTextColor(Color.BLACK)
     badge.setTypeface(null, Typeface.BOLD)
-    badge.textSize = BADGE_TEXT_SIZE_SP
+    badge.textSize = BADGE_TEXT_SP
 }
 
-private fun getPx(context: Context, dp: Float): Int {
-    val metrics = context.resources.displayMetrics
-    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, metrics).toInt()
+private fun getPx(ctx: Context, dp: Float): Int {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP, dp, ctx.resources.displayMetrics
+    ).toInt()
 }
