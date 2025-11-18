@@ -9,6 +9,16 @@ import com.rlatneorp.fast_subway_exit.model.ElevatorRow
 import com.rlatneorp.fast_subway_exit.model.StationRepository
 import kotlinx.coroutines.launch
 
+private const val MSG_INPUT_STATION_NAME = "역 이름을 입력해주세요."
+private const val MSG_CURRENT_LOCATION_DEFAULT = "현재위치"
+private const val MSG_NO_SEARCH_RESULT = "검색 결과 없음"
+private const val MSG_LOCATION_UNKNOWN = "위치 정보 없음"
+private const val MSG_SEARCH_FAILURE_PREFIX = "검색 실패: "
+private const val MSG_LOCATION_FAILURE_PREFIX = "위치 또는 승강기 정보를 가져오는데 실패했습니다: "
+private const val STATUS_AVAILABLE = "사용가능"
+private const val REGEX_PARENTHESES_PATTERN = "\\(.*\\)"
+private const val SUFFIX_PLACE_COUNT = "곳"
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: StationRepository = StationRepository(application)
@@ -16,7 +26,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _elevatorInfo = MutableLiveData<List<ElevatorRow>>()
     val elevatorInfo: LiveData<List<ElevatorRow>> = _elevatorInfo
 
-    private val _currentLocationName = MutableLiveData<String>("현재위치")
+    private val _currentLocationName = MutableLiveData<String>(MSG_CURRENT_LOCATION_DEFAULT)
     val currentLocationName: LiveData<String> = _currentLocationName
 
     private val _isLoading = MutableLiveData<Boolean>(false)
@@ -42,7 +52,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun searchStation(stationName: String) {
         if (stationName.isBlank()) {
-            _errorMessage.value = Event("역 이름을 입력해주세요.")
+            _errorMessage.value = Event(MSG_INPUT_STATION_NAME)
             return
         }
 
@@ -63,7 +73,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updateStateOnSuccess(elevatorList)
             },
             onFailure = { e ->
-                updateStateOnFailure(e as IllegalAccessException, isLocationBased)
+                updateStateOnFailure(e, isLocationBased)
             }
         )
         _isLoading.value = false
@@ -73,33 +83,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val rawStationName = allList.firstOrNull()?.stationName
 
         if (rawStationName == null) {
-            _currentLocationName.value = "검색 결과 없음"
+            _currentLocationName.value = MSG_NO_SEARCH_RESULT
             _elevatorInfo.value = emptyList()
             _allElevatorsWorking.value = false
             return
         }
-        val cleanStationName = rawStationName.replace(Regex("\\(.*\\)"), "")
-        val maintenanceList = allList.filter { it.runStatus != "사용가능" }
+
+        val cleanStationName = rawStationName.replace(Regex(REGEX_PARENTHESES_PATTERN), "")
+        val maintenanceList = allList.filter { it.runStatus != STATUS_AVAILABLE }
+
+        _currentLocationName.value = cleanStationName
+
         if (maintenanceList.isNotEmpty()) {
-            _currentLocationName.value = "$cleanStationName(${maintenanceList.size}곳)"
-        } else {
-            _currentLocationName.value = cleanStationName
+            _currentLocationName.value = "$cleanStationName(${maintenanceList.size}$SUFFIX_PLACE_COUNT)"
         }
+
         _elevatorInfo.value = maintenanceList
         _allElevatorsWorking.value = maintenanceList.isEmpty()
     }
 
-    private fun updateStateOnFailure(e: Exception, isLocationBased: Boolean) {
-        var errorMessage = "검색 실패: ${e.message}"
-
+    private fun updateStateOnFailure(e: Throwable, isLocationBased: Boolean) {
+        var errorMessage = "$MSG_SEARCH_FAILURE_PREFIX${e.message}"
         if (isLocationBased) {
-            errorMessage = "위치 또는 승강기 정보를 가져오는데 실패했습니다: ${e.message}"
+            errorMessage = "$MSG_LOCATION_FAILURE_PREFIX${e.message}"
         }
-
         _errorMessage.value = Event(errorMessage)
-
         if (isLocationBased) {
-            _currentLocationName.value = "위치 정보 없음"
+            _currentLocationName.value = MSG_LOCATION_UNKNOWN
         }
     }
 }

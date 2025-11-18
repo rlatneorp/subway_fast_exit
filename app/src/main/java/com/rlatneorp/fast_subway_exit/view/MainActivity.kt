@@ -23,6 +23,24 @@ import com.rlatneorp.fast_subway_exit.viewmodel.Event
 import com.rlatneorp.fast_subway_exit.viewmodel.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
 
+private const val COLOR_GREEN_HEX = "#4CAF50"
+private const val COLOR_PURPLE_HEX = "#6750A4"
+
+private const val EMAIL_ADDRESS = "rlatneorp@gmail.com"
+private const val EMAIL_SUBJECT = "승강기 앱 문의"
+private const val EMAIL_BODY = "문의 내용을 입력하세요:"
+private const val EMAIL_SCHEME = "mailto:"
+
+private const val MSG_ALL_WORKING = "현재 모든 승강기가 정상 운행 중입니다. \uD83D\uDE0A"
+private const val MSG_NO_RESULT_KEY = "검색 결과 없음"
+private const val MSG_NO_RESULT_TEXT = "검색 결과가 없습니다."
+private const val MSG_DEFAULT_Hint = "역 이름을 검색하거나 현재 위치를 찾아보세요."
+private const val MSG_EMAIL_APP_NOT_FOUND = "이메일 앱을 찾을 수 없습니다."
+private const val MSG_PERMISSION_GRANTED = "위치 권한이 승인되었습니다."
+private const val MSG_PERMISSION_REQUIRED = "위치 권한이 필요합니다."
+private const val MSG_PERMISSION_RATIONALE_LOAD = "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다."
+private const val MSG_PERMISSION_RATIONALE_CHECK = "현재 위치 기능을 위해 위치 권한이 필요합니다."
+
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
@@ -49,21 +67,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initViews()
+        setupRecyclerView()
+        setupObservers()
+        setupClickListeners()
+        checkLocationPermission()
+    }
+
+    private fun initViews() {
         searchButton = findViewById(R.id.searchButton)
         inputSearchText = findViewById(R.id.inputSearchText)
-        val mailButton: ImageButton = findViewById(R.id.mailButton)
-        val currentLocationButton: ImageButton = findViewById(R.id.currentLocationButton)
-
         loadingLayout = findViewById(R.id.loadingLayout)
         initialLayout = findViewById(R.id.initialLayout)
         initialMessageText = findViewById(R.id.initialMessageText)
         rvElevatorList = findViewById(R.id.rvElevatorList)
         stationNameResult = findViewById(R.id.stationNameResult)
-
-        setupRecyclerView()
-        setupObservers()
-        setupClickListeners(mailButton, currentLocationButton)
-        checkLocationPermission()
     }
 
     private fun setupRecyclerView() {
@@ -78,9 +96,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.allElevatorsWorking.observe(this) { isAllWorking ->
-            if (isAllWorking) {
-                showAllWorkingMessage()
-            }
+            handleAllWorkingState(isAllWorking)
         }
 
         viewModel.currentLocationName.observe(this) { name ->
@@ -97,6 +113,12 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.navigateToEmail.observe(this) { event ->
             handleEmailNavigation(event)
+        }
+    }
+
+    private fun handleAllWorkingState(isAllWorking: Boolean) {
+        if (isAllWorking) {
+            showAllWorkingMessage()
         }
     }
 
@@ -120,18 +142,20 @@ class MainActivity : AppCompatActivity() {
         initialLayout.visibility = View.VISIBLE
         stationNameResult.visibility = View.VISIBLE
 
-        initialMessageText.text = "현재 모든 승강기가 정상 운행 중입니다. \uD83D\uDE0A"
-        initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
+        initialMessageText.text = MSG_ALL_WORKING
+        initialMessageText.setTextColor(Color.parseColor(COLOR_GREEN_HEX))
     }
 
     private fun updateInitialMessage() {
-        if (viewModel.currentLocationName.value == "검색 결과 없음") {
-            initialMessageText.text = "검색 결과가 없습니다."
-            initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
+        val defaultColor = Color.parseColor(COLOR_PURPLE_HEX)
+
+        if (viewModel.currentLocationName.value == MSG_NO_RESULT_KEY) {
+            initialMessageText.text = MSG_NO_RESULT_TEXT
+            initialMessageText.setTextColor(defaultColor)
             return
         }
-        initialMessageText.text = "역 이름을 검색하거나 현재 위치를 찾아보세요."
-        initialMessageText.setTextColor(ContextCompat.getColor(this, Color.parseColor("#6750A4")))
+        initialMessageText.text = MSG_DEFAULT_Hint
+        initialMessageText.setTextColor(defaultColor)
     }
 
     private fun handleLoadingUpdate(isLoading: Boolean) {
@@ -145,68 +169,70 @@ class MainActivity : AppCompatActivity() {
         loadingLayout.visibility = View.GONE
     }
 
-    private fun setupClickListeners(mailButton: ImageButton, currentLocationButton: ImageButton) {
+    private fun setupClickListeners() {
         searchButton.setOnClickListener {
             val query = inputSearchText.text.toString()
             viewModel.searchStation(query)
         }
 
-        mailButton.setOnClickListener {
+        findViewById<View>(R.id.mailButton).setOnClickListener {
             viewModel.onInquiryClicked()
         }
 
-        currentLocationButton.setOnClickListener {
+        findViewById<View>(R.id.currentLocationButton).setOnClickListener {
             checkLocationPermissionAndLoadData()
         }
     }
 
     private fun checkLocationPermissionAndLoadData() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED) {
+        if (hasLocationPermission()) {
             viewModel.fetchInfoForCurrentLocation()
             return
         }
 
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            Toast.makeText(this, "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다.", Toast.LENGTH_LONG).show()
-            locationPermissionRequest.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
+            showToast(MSG_PERMISSION_RATIONALE_LOAD)
+            requestLocationPermissions()
             return
         }
 
-        locationPermissionRequest.launch(arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ))
+        requestLocationPermissions()
     }
 
     private fun checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED) {
+        if (hasLocationPermission()) {
             return
         }
 
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            Toast.makeText(this, "현재 위치 기능을 위해 위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+            showToast(MSG_PERMISSION_RATIONALE_CHECK)
         }
 
-        locationPermissionRequest.launch(arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ))
+        requestLocationPermissions()
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestLocationPermissions() {
+        locationPermissionRequest.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
     }
 
     private fun sendEmailInquiry() {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("mailto:")
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("rlatneorp@gmail.com"))
-            putExtra(Intent.EXTRA_SUBJECT, "승강기 앱 문의")
-            putExtra(Intent.EXTRA_TEXT, "문의 내용을 입력하세요:")
+            data = Uri.parse(EMAIL_SCHEME)
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(EMAIL_ADDRESS))
+            putExtra(Intent.EXTRA_SUBJECT, EMAIL_SUBJECT)
+            putExtra(Intent.EXTRA_TEXT, EMAIL_BODY)
         }
 
         if (emailIntent.resolveActivity(packageManager) != null) {
@@ -214,32 +240,36 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        Toast.makeText(this, "이메일 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+        showToast(MSG_EMAIL_APP_NOT_FOUND)
     }
 
     private fun handleLocationPermissionResult(permissions: Map<String, Boolean>) {
         if (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)) {
-            showToast("위치 권한이 승인되었습니다.")
+            showToast(MSG_PERMISSION_GRANTED)
             return
         }
 
         if (permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)) {
-            showToast("위치 권한이 승인되었습니다.")
+            showToast(MSG_PERMISSION_GRANTED)
             return
         }
 
-        showToast("위치 권한이 필요합니다.")
+        showToast(MSG_PERMISSION_REQUIRED)
     }
 
     private fun handleErrorMessage(event: Event<String>) {
         event.getContentIfNotHandled()?.let { message ->
             showToast(message)
-            loadingLayout.visibility = View.GONE
-            initialLayout.visibility = View.VISIBLE
-            rvElevatorList.visibility = View.GONE
-            stationNameResult.visibility = View.GONE
-            updateInitialMessage()
+            showErrorState()
         }
+    }
+
+    private fun showErrorState() {
+        loadingLayout.visibility = View.GONE
+        initialLayout.visibility = View.VISIBLE
+        rvElevatorList.visibility = View.GONE
+        stationNameResult.visibility = View.GONE
+        updateInitialMessage()
     }
 
     private fun handleEmailNavigation(event: Event<Unit>) {

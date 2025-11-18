@@ -24,6 +24,12 @@ private const val TEXT_PREFIX_ELEVATOR = "승강기 "
 private const val KEYWORD_REPAIR = "보수"
 private const val KEYWORD_CHECK = "점검"
 private const val KEYWORD_FIX = "수리"
+private const val KEYWORD_ESCALATOR = "에스컬레이터"
+private const val KEYWORD_ELEVATOR = "엘리베이터"
+private const val KEYWORD_WHEELCHAIR = "휠체어"
+private const val KEYWORD_MOVING = "무빙"
+private const val DEFAULT_FACILITY = "승강기"
+
 private const val BADGE_HEIGHT_DP = 48f
 private const val BADGE_MIN_WIDTH_DP = 48f
 private const val BADGE_MARGIN_END_DP = 6f
@@ -46,11 +52,13 @@ class ElevatorAdapter : ListAdapter<ElevatorRow, ElevatorViewHolder>(ElevatorDif
 class ElevatorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     val location: TextView = itemView.findViewById(R.id.tvLocation)
     val runStatus: TextView = itemView.findViewById(R.id.tvRunStatus)
+    val facilityName: TextView = itemView.findViewById(R.id.tvFacilityName)
     val badgeContainer: LinearLayout = itemView.findViewById(R.id.llBadges)
 
     fun bind(item: ElevatorRow) {
         bindRunStatus(item.runStatus)
         bindLocationInfo(item.location)
+        bindFacilityName(item.facilityName)
     }
 }
 
@@ -66,12 +74,30 @@ class ElevatorDiffCallback : DiffUtil.ItemCallback<ElevatorRow>() {
 
 private fun ElevatorViewHolder.bindRunStatus(status: String) {
     runStatus.text = formatRunStatus(status)
+
+    if (isRepairing(status)) {
+        runStatus.setTextColor(Color.parseColor("#CA1A86"))
+    } else if (status.contains("가능")) {
+        runStatus.setTextColor(Color.parseColor("#4CAF50"))
+    } else {
+        runStatus.setTextColor(Color.BLACK)
+    }
+}
+
+private fun ElevatorViewHolder.bindFacilityName(rawName: String) {
+    facilityName.text = simplifyFacilityName(rawName)
+    facilityName.visibility = View.VISIBLE
+}
+
+private fun simplifyFacilityName(rawName: String): String {
+    if (rawName.contains(KEYWORD_ESCALATOR)) return KEYWORD_ESCALATOR
+    if (rawName.contains(KEYWORD_ELEVATOR)) return KEYWORD_ELEVATOR
+    if (rawName.contains(KEYWORD_WHEELCHAIR)) return "$KEYWORD_WHEELCHAIR 리프트"
+    if (rawName.contains(KEYWORD_MOVING)) return "$KEYWORD_MOVING 워크"
+    return DEFAULT_FACILITY
 }
 
 private fun formatRunStatus(status: String): String {
-    if (isRepairing(status)) {
-        return "$TEXT_PREFIX_ELEVATOR$status"
-    }
     return status
 }
 
@@ -112,7 +138,7 @@ private fun ElevatorViewHolder.showBadgeState(numbers: List<String>, loc: String
 private fun cleanLocationText(original: String, numbers: List<String>): String {
     var text = original
     numbers.forEach { text = text.replace(it, "") }
-    text = text.replace(",", "").trim()
+    text = text.replace(",", "").replace("번", "").trim()
 
     if (text.isBlank()) {
         return TEXT_DEFAULT_LOCATION
