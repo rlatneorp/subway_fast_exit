@@ -1,11 +1,14 @@
 package com.rlatneorp.fast_subway_exit.view
 
 import android.Manifest
+import android.content.ActivityNotFoundException // (추가)
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -22,6 +25,7 @@ import com.rlatneorp.fast_subway_exit.model.ElevatorRow
 import com.rlatneorp.fast_subway_exit.viewmodel.Event
 import com.rlatneorp.fast_subway_exit.viewmodel.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
+import java.security.MessageDigest
 
 private const val COLOR_GREEN_HEX = "#4CAF50"
 private const val COLOR_PURPLE_HEX = "#6750A4"
@@ -31,11 +35,11 @@ private const val EMAIL_SUBJECT = "승강기 앱 문의"
 private const val EMAIL_BODY = "문의 내용을 입력하세요:"
 private const val EMAIL_SCHEME = "mailto:"
 
-private const val MSG_ALL_WORKING = "현재 모든 승강기가 정상 운행 중입니다. \uD83D\uDE0A"
+private const val MSG_ALL_WORKING = "보수중인 출구가 없습니다."
 private const val MSG_NO_RESULT_KEY = "검색 결과 없음"
 private const val MSG_NO_RESULT_TEXT = "검색 결과가 없습니다."
-private const val MSG_DEFAULT_Hint = "역 이름을 검색하거나 현재 위치를 찾아보세요."
-private const val MSG_EMAIL_APP_NOT_FOUND = "이메일 앱을 찾을 수 없습니다."
+private const val MSG_DEFAULT_HINT = "역 이름을 검색하거나 현재 위치를 찾아보세요."
+private const val MSG_EMAIL_APP_NOT_FOUND = "이메일을 보낼 수 있는 앱이 없습니다."
 private const val MSG_PERMISSION_GRANTED = "위치 권한이 승인되었습니다."
 private const val MSG_PERMISSION_REQUIRED = "위치 권한이 필요합니다."
 private const val MSG_PERMISSION_RATIONALE_LOAD = "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다."
@@ -46,14 +50,11 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     private lateinit var elevatorAdapter: ElevatorAdapter
-
     private lateinit var searchButton: ImageButton
     private lateinit var inputSearchText: TextInputEditText
-
     private lateinit var loadingLayout: LinearLayout
     private lateinit var initialLayout: LinearLayout
     private lateinit var rvElevatorList: RecyclerView
-
     private lateinit var stationNameResult: TextView
     private lateinit var initialMessageText: TextView
 
@@ -67,11 +68,34 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        getAppKeyHash()
         initViews()
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
         checkLocationPermission()
+    }
+
+    private fun getAppKeyHash() {
+        try {
+            val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                packageInfo.signingInfo?.apkContentsSigners ?: packageInfo.signingInfo?.signingCertificateHistory
+            } else {
+                @Suppress("DEPRECATION")
+                val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                packageInfo.signatures
+            }
+
+            signatures?.forEach { signature ->
+                val md = MessageDigest.getInstance("SHA")
+                md.update(signature.toByteArray())
+                val keyHash = android.util.Base64.encodeToString(md.digest(), android.util.Base64.NO_WRAP)
+                Log.d("KeyHash", "현재 앱의 키 해시: $keyHash")
+            }
+        } catch (e: Exception) {
+            Log.e("KeyHash", "키 해시 구하기 실패", e)
+        }
     }
 
     private fun initViews() {
@@ -154,7 +178,7 @@ class MainActivity : AppCompatActivity() {
             initialMessageText.setTextColor(defaultColor)
             return
         }
-        initialMessageText.text = MSG_DEFAULT_Hint
+        initialMessageText.text = MSG_DEFAULT_HINT
         initialMessageText.setTextColor(defaultColor)
     }
 
@@ -227,6 +251,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    // (수정) try-catch로 변경하여 이메일 앱 실행 로직 강화
     private fun sendEmailInquiry() {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse(EMAIL_SCHEME)
@@ -235,12 +260,13 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TEXT, EMAIL_BODY)
         }
 
-        if (emailIntent.resolveActivity(packageManager) != null) {
+        try {
             startActivity(emailIntent)
-            return
+        } catch (e: ActivityNotFoundException) {
+            showToast(MSG_EMAIL_APP_NOT_FOUND)
+        } catch (e: Exception) {
+            showToast("이메일 앱 실행 중 오류가 발생했습니다.")
         }
-
-        showToast(MSG_EMAIL_APP_NOT_FOUND)
     }
 
     private fun handleLocationPermissionResult(permissions: Map<String, Boolean>) {
