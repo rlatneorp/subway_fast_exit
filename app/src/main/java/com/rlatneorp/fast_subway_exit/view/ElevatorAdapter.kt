@@ -30,96 +30,11 @@ private const val BADGE_MARGIN_END_DP = 6f
 private const val BADGE_TEXT_SIZE_SP = 24f
 private const val BADGE_PADDING_DP = 8f
 
-class ElevatorAdapter : ListAdapter<ElevatorRow, ElevatorAdapter.ElevatorViewHolder>(ElevatorDiffCallback()) {
-
-    class ElevatorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val location: TextView = itemView.findViewById(R.id.tvLocation)
-        private val runStatus: TextView = itemView.findViewById(R.id.tvRunStatus)
-        private val badgeContainer: LinearLayout = itemView.findViewById(R.id.llBadges)
-
-        fun bind(item: ElevatorRow) {
-            runStatus.text = getFormattedRunStatus(item.runStatus)
-
-            badgeContainer.removeAllViews()
-
-            val numberRegex = Regex(REGEX_NUMBER_PATTERN)
-            val matches = numberRegex.findAll(item.location)
-            val numbers = matches.map { it.value }.toList()
-
-            if (numbers.isEmpty()) {
-                badgeContainer.visibility = View.GONE
-                location.text = item.location
-                return
-            }
-
-            createBadges(numbers)
-            badgeContainer.visibility = View.VISIBLE
-
-            location.text = getCleanedLocationText(item.location, numbers)
-        }
-
-        private fun getFormattedRunStatus(status: String): String {
-            if (status.contains(KEYWORD_REPAIR) || status.contains(KEYWORD_CHECK) || status.contains(KEYWORD_FIX)) {
-                return "$TEXT_PREFIX_ELEVATOR$status"
-            }
-            return status
-        }
-
-        private fun getCleanedLocationText(originalLocation: String, numbers: List<String>): String {
-            var cleanLocation = originalLocation
-
-            numbers.forEach { num ->
-                cleanLocation = cleanLocation.replace(num, "")
-            }
-
-            cleanLocation = cleanLocation.replace(",", "")
-                .trim()
-
-            if (cleanLocation.isBlank()) {
-                return TEXT_DEFAULT_LOCATION
-            }
-            return cleanLocation
-        }
-
-        private fun createBadges(numbers: List<String>) {
-            val context = itemView.context
-            for (num in numbers) {
-                val badge = createSingleBadge(context, num)
-                badgeContainer.addView(badge)
-            }
-        }
-
-        private fun createSingleBadge(context: Context, text: String): TextView {
-            val badge = TextView(context)
-
-            val heightPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, BADGE_HEIGHT_DP, context.resources.displayMetrics).toInt()
-            val minWidthPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, BADGE_MIN_WIDTH_DP, context.resources.displayMetrics).toInt()
-
-            val layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, heightPx)
-            layoutParams.marginEnd = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, BADGE_MARGIN_END_DP, context.resources.displayMetrics).toInt()
-
-            badge.layoutParams = layoutParams
-            badge.minimumWidth = minWidthPx
-
-            val paddingPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, BADGE_PADDING_DP, context.resources.displayMetrics).toInt()
-            badge.setPadding(paddingPx, 0, paddingPx, 0)
-
-            badge.setBackgroundResource(R.drawable.station_button)
-            badge.backgroundTintList = ColorStateList.valueOf(Color.parseColor(COLOR_BADGE_HEX))
-
-            badge.text = text
-            badge.gravity = Gravity.CENTER
-            badge.includeFontPadding = false
-            badge.setTextColor(Color.BLACK)
-            badge.setTypeface(null, Typeface.BOLD)
-            badge.textSize = BADGE_TEXT_SIZE_SP
-
-            return badge
-        }
-    }
+class ElevatorAdapter : ListAdapter<ElevatorRow, ElevatorViewHolder>(ElevatorDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ElevatorViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_elevator, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_elevator, parent, false)
         return ElevatorViewHolder(view)
     }
 
@@ -128,12 +43,121 @@ class ElevatorAdapter : ListAdapter<ElevatorRow, ElevatorAdapter.ElevatorViewHol
     }
 }
 
+class ElevatorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    val location: TextView = itemView.findViewById(R.id.tvLocation)
+    val runStatus: TextView = itemView.findViewById(R.id.tvRunStatus)
+    val badgeContainer: LinearLayout = itemView.findViewById(R.id.llBadges)
+
+    fun bind(item: ElevatorRow) {
+        bindRunStatus(item.runStatus)
+        bindLocationInfo(item.location)
+    }
+}
+
 class ElevatorDiffCallback : DiffUtil.ItemCallback<ElevatorRow>() {
-    override fun areItemsTheSame(oldItem: ElevatorRow, newItem: ElevatorRow): Boolean {
-        return oldItem.facilityName == newItem.facilityName && oldItem.location == newItem.location
+    override fun areItemsTheSame(old: ElevatorRow, new: ElevatorRow): Boolean {
+        return old.facilityName == new.facilityName && old.location == new.location
     }
 
-    override fun areContentsTheSame(oldItem: ElevatorRow, newItem: ElevatorRow): Boolean {
-        return oldItem == newItem
+    override fun areContentsTheSame(old: ElevatorRow, new: ElevatorRow): Boolean {
+        return old == new
     }
+}
+
+private fun ElevatorViewHolder.bindRunStatus(status: String) {
+    runStatus.text = formatRunStatus(status)
+}
+
+private fun formatRunStatus(status: String): String {
+    if (isRepairing(status)) {
+        return "$TEXT_PREFIX_ELEVATOR$status"
+    }
+    return status
+}
+
+private fun isRepairing(status: String): Boolean {
+    return status.contains(KEYWORD_REPAIR) ||
+            status.contains(KEYWORD_CHECK) ||
+            status.contains(KEYWORD_FIX)
+}
+
+private fun ElevatorViewHolder.bindLocationInfo(loc: String) {
+    badgeContainer.removeAllViews()
+    val numbers = extractNumbers(loc)
+
+    if (numbers.isEmpty()) {
+        showNoBadgeState(loc)
+        return
+    }
+    showBadgeState(numbers, loc)
+}
+
+private fun extractNumbers(location: String): List<String> {
+    val numberRegex = Regex(REGEX_NUMBER_PATTERN)
+    val matches = numberRegex.findAll(location)
+    return matches.map { it.value }.toList()
+}
+
+private fun ElevatorViewHolder.showNoBadgeState(loc: String) {
+    badgeContainer.visibility = View.GONE
+    location.text = loc
+}
+
+private fun ElevatorViewHolder.showBadgeState(numbers: List<String>, loc: String) {
+    addBadgesToContainer(itemView.context, badgeContainer, numbers)
+    badgeContainer.visibility = View.VISIBLE
+    location.text = cleanLocationText(loc, numbers)
+}
+
+private fun cleanLocationText(original: String, numbers: List<String>): String {
+    var text = original
+    numbers.forEach { text = text.replace(it, "") }
+    text = text.replace(",", "").trim()
+
+    if (text.isBlank()) {
+        return TEXT_DEFAULT_LOCATION
+    }
+    return text
+}
+
+private fun addBadgesToContainer(ctx: Context, container: LinearLayout, numbers: List<String>) {
+    for (num in numbers) {
+        val badge = createBadgeView(ctx, num)
+        container.addView(badge)
+    }
+}
+
+private fun createBadgeView(context: Context, text: String): TextView {
+    val badge = TextView(context)
+    setupBadgeLayout(context, badge)
+    setupBadgeStyle(badge)
+    badge.text = text
+    return badge
+}
+
+private fun setupBadgeLayout(context: Context, badge: TextView) {
+    val height = getPx(context, BADGE_HEIGHT_DP)
+    val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, height)
+    params.marginEnd = getPx(context, BADGE_MARGIN_END_DP)
+
+    badge.layoutParams = params
+    badge.minimumWidth = getPx(context, BADGE_MIN_WIDTH_DP)
+
+    val padding = getPx(context, BADGE_PADDING_DP)
+    badge.setPadding(padding, 0, padding, 0)
+}
+
+private fun setupBadgeStyle(badge: TextView) {
+    badge.setBackgroundResource(R.drawable.station_button)
+    badge.backgroundTintList = ColorStateList.valueOf(Color.parseColor(COLOR_BADGE_HEX))
+    badge.gravity = Gravity.CENTER
+    badge.includeFontPadding = false
+    badge.setTextColor(Color.BLACK)
+    badge.setTypeface(null, Typeface.BOLD)
+    badge.textSize = BADGE_TEXT_SIZE_SP
+}
+
+private fun getPx(context: Context, dp: Float): Int {
+    val metrics = context.resources.displayMetrics
+    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, metrics).toInt()
 }
