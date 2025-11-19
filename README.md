@@ -43,7 +43,7 @@ https://data.seoul.go.kr/dataList/OA-22122/S/1/datasetView.do
 
 GPS → https://developers.google.com/maps/documentation/geolocation/overview?hl=ko
 
-네이버 맵 → https://navermaps.github.io/maps.js.ncp/docs/tutorial-digest.example.html
+카카오 맵 → https://apis.map.kakao.com/android_v2/
 
 ## 시연 영상
 https://tv.kakao.com/v/459381025
