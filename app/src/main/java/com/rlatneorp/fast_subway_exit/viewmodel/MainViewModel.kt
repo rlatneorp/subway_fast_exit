@@ -17,7 +17,7 @@ private const val MSG_SEARCH_FAILURE_PREFIX = "검색 실패: "
 private const val MSG_LOCATION_FAILURE_PREFIX = "위치 또는 승강기 정보를 가져오는데 실패했습니다: "
 private const val STATUS_AVAILABLE = "사용가능"
 private const val REGEX_PARENTHESES_PATTERN = "\\(.*\\)"
-private const val SUFFIX_PLACE_COUNT = "곳"
+private const val SUFFIX_PLACE_COUNT = "개"
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
