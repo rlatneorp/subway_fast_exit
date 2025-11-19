@@ -1,3 +1,13 @@
+
+## 앱 모습
+<img width="590" height="662" alt="image" src="https://github.com/user-attachments/assets/22af7ebb-6f54-49e4-aaac-a654ee3deca4" />
+
+## 앱 아이콘
+<img width="315" height="266" alt="image" src="https://github.com/user-attachments/assets/b3dad593-8c29-45ad-ac16-4079499cc5f8" />
+
+## 시연 영상
+https://tv.kakao.com/v/459381025
+
 ## 기능구현 목록
 
 1. UI를 안드로이드 스튜디오를 이용해 xml로 만든다
@@ -45,5 +55,3 @@ GPS → https://developers.google.com/maps/documentation/geolocation/overview?hl
 
 카카오 맵 → https://apis.map.kakao.com/android_v2/
 
-## 시연 영상
-https://tv.kakao.com/v/459381025
