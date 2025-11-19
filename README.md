@@ -35,7 +35,7 @@ GPS는 어떻게 쓸 수 있는지 알아야한다
 
 안드로이드 어플을 만들때 필요한 것들이 무엇인지 알아야한다
 
-### 사용한 API
+## 사용한 API
 
 지하철 승강기 정보 API → https://data.seoul.go.kr/dataList/OA-15994/S/1/datasetView.do
 
@@ -44,3 +44,6 @@ https://data.seoul.go.kr/dataList/OA-22122/S/1/datasetView.do
 GPS → https://developers.google.com/maps/documentation/geolocation/overview?hl=ko
 
 네이버 맵 → https://navermaps.github.io/maps.js.ncp/docs/tutorial-digest.example.html
+
+## 시연 영상
+https://tv.kakao.com/v/459381025
