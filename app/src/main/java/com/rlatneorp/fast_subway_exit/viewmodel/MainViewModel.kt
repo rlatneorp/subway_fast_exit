@@ -48,7 +48,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _allElevatorsWorking = MutableLiveData<Boolean>(false)
     val allElevatorsWorking: LiveData<Boolean> = _allElevatorsWorking
 
-
     fun fetchInfoForCurrentLocation() {
         _isLoading.value = true
         viewModelScope.launch {
@@ -118,19 +117,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun groupAndMapToUIModel(list: List<ElevatorRow>): List<ElevatorUIModel> {
-        // (수정) '시설 이름'을 기준으로 그룹핑 -> 같은 종류면 장소가 달라도 하나로 합쳐짐
         val grouped = list.groupBy { simplifyName(it.facilityName) }
-
         return grouped.map { (facilityName, rows) ->
-            // 위치 텍스트 합치기 (예: "1번 출구", "2번 출구" -> "1번 출구, 2번 출구")
             val combinedLocation = rows.map { it.location }
                 .distinct()
                 .joinToString(", ")
-
             val statuses = rows.map { it.runStatus }
                 .distinct()
                 .joinToString(", ")
-
             ElevatorUIModel(combinedLocation, facilityName, statuses)
         }
     }
@@ -144,11 +138,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun updateStateOnFailure(e: Throwable, isLocationBased: Boolean) {
         var errorMessage = "$MSG_SEARCH_FAILURE_PREFIX${e.message}"
-
         if (isLocationBased) {
             errorMessage = "$MSG_LOCATION_FAILURE_PREFIX${e.message}"
         }
-
         _errorMessage.value = Event(errorMessage)
         if (isLocationBased) {
             _currentLocationName.value = MSG_LOCATION_UNKNOWN

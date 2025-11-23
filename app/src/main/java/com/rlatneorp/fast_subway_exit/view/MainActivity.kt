@@ -2,12 +2,15 @@ package com.rlatneorp.fast_subway_exit.view
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -151,8 +154,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         searchButton.setOnClickListener {
-            val query = inputSearchText.text.toString()
-            viewModel.searchStation(query)
+            performSearch()
+        }
+        inputSearchText.setOnEditorActionListener { _, actionId, _ ->
+            handleEditorAction(actionId)
         }
         findViewById<View>(R.id.mailButton).setOnClickListener {
             viewModel.onInquiryClicked()
@@ -160,6 +165,26 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.currentLocationButton).setOnClickListener {
             checkLocationPermissionAndLoadData()
         }
+    }
+
+    private fun handleEditorAction(actionId: Int): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            performSearch()
+            return true
+        }
+        return false
+    }
+
+    private fun performSearch() {
+        val query = inputSearchText.text.toString()
+        viewModel.searchStation(query)
+        hideKeyboard()
+        inputSearchText.clearFocus()
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(inputSearchText.windowToken, 0)
     }
 
     private fun checkLocationPermissionAndLoadData() {

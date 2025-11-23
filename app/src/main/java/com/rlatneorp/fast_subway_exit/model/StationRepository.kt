@@ -74,17 +74,12 @@ class StationRepository(context: Context) {
             if (documents.isNullOrEmpty()) {
                 return Result.failure(Exception(ERR_NO_SUBWAY_NEARBY))
             }
-
             val closestStation = documents[0]
             val placeName = closestStation.placeName ?: return Result.failure(Exception(ERR_NO_STATION_NAME))
-
             Log.d(TAG, "$LOG_KAKAO_FOUND$placeName")
-
             val stationName = extractStationName(placeName)
             Log.d(TAG, "$LOG_EXTRACTED_NAME$stationName")
-
             searchElevatorInfoByName(stationName)
-
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}")
             Result.failure(e)
@@ -93,7 +88,6 @@ class StationRepository(context: Context) {
 
     private fun extractStationName(fullStationName: String): String {
         if (!fullStationName.contains(SUFFIX_STATION)) return fullStationName
-
         var name = fullStationName.substringBefore(SUFFIX_STATION) + SUFFIX_STATION
         if (name.contains("(")) {
             name = name.substringBefore("(")
@@ -105,16 +99,11 @@ class StationRepository(context: Context) {
         try {
             val query = stationName.trim().replace(SUFFIX_STATION, "")
             Log.d(TAG, "$LOG_SEOUL_QUERY$query")
-
             val deferred1 = async { fetchRange(RANGE_1_START, RANGE_1_END, query) }
             val deferred2 = async { fetchRange(RANGE_2_START, RANGE_2_END, query) }
             val deferred3 = async { fetchRange(RANGE_3_START, RANGE_3_END, query) }
-
             val allResults = listOf(deferred1, deferred2, deferred3).awaitAll().flatten()
-
-            // 로컬 필터링 수행
             filterAndValidateList(allResults, query)
-
         } catch (e: Exception) {
             Log.e(TAG, "$LOG_SEARCH_ERROR${e.message}")
             Result.failure(e)
@@ -125,13 +114,10 @@ class StationRepository(context: Context) {
         val filteredList = allResults.filter { item ->
             item.stationName.contains(query)
         }
-
         Log.d(TAG, "$LOG_FILTERED_COUNT${filteredList.size}")
-
         if (filteredList.isNotEmpty()) {
             return Result.success(filteredList)
         }
-
         return Result.failure(Exception(ERR_NO_SEARCH_RESULT))
     }
 
