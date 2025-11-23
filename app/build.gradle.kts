@@ -86,4 +86,12 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
 
+// 1. 기본 유닛 테스트 프레임워크 (JUnit4)
+    testImplementation("junit:junit:4.13.2")
+// 2. 가짜 객체 생성 도구 (MockK - 코틀린에 최적화됨)
+    testImplementation("io.mockk:mockk:1.13.8")
+// 3. 코루틴 테스트 도구 (runTest 등 지원)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+// 4. LiveData 테스트 도구 (InstantTaskExecutorRule)
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
 }
