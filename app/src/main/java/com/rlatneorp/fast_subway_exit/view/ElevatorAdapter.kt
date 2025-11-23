@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.rlatneorp.fast_subway_exit.R
 import com.rlatneorp.fast_subway_exit.model.ElevatorUIModel
+import androidx.core.graphics.toColorInt
 
 private const val COLOR_BADGE_BG = "#FF80AB"
 private const val COLOR_STATUS_REPAIR = "#E91E63"
@@ -40,9 +41,9 @@ private const val KEY_REPAIR = "보수"
 private const val KEY_CHECK = "점검"
 private const val KEY_FIX = "수리"
 private const val KEY_OK = "가능"
-private const val BADGE_H_DP = 44f
-private const val BADGE_MIN_W_DP = 44f
-private const val BADGE_MARGIN_DP = 6f
+private const val BADGE_H_DP = 34f
+private const val BADGE_MIN_W_DP = 34f
+private const val BADGE_MARGIN_DP = 5f
 private const val BADGE_TEXT_SP = 20f
 private const val BADGE_PAD_DP = 8f
 
@@ -154,7 +155,7 @@ private fun applyBadgeLayout(ctx: Context, badge: TextView) {
 private fun applyBadgeStyle(badge: TextView) {
     badge.setBackgroundResource(R.drawable.station_button)
     badge.backgroundTintList = ColorStateList.valueOf(
-        Color.parseColor(COLOR_BADGE_BG)
+        COLOR_BADGE_BG.toColorInt()
     )
     badge.gravity = Gravity.CENTER
     badge.includeFontPadding = false

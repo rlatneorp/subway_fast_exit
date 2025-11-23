@@ -28,10 +28,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="출입구"
-            android:textSize="25sp"
+            android:textSize="15sp"
             android:textColor="#000000"
             android:textStyle="bold"
-            android:layout_marginBottom="3dp"
+            android:layout_marginBottom="2dp"
             android:lineSpacingExtra="4dp"/>
     </LinearLayout>
 
@@ -43,7 +43,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="엘리베이터"
-        android:textSize="25sp"
+        android:textSize="15sp"
         android:textColor="#555555"
         android:textStyle="normal"/>
 
@@ -56,7 +56,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="보수중"
-        android:textSize="25sp"
+        android:textSize="15sp"
         android:textColor="#E91E63"
         android:textStyle="bold" />
 
