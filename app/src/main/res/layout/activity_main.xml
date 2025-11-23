@@ -31,7 +31,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="서울 지하철"
+                    android:text="수도권 지하철"
                     android:textColor="#6750A4"
                     android:textSize="20sp"/>
                 <TextView

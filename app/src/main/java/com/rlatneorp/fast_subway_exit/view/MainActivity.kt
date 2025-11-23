@@ -1,14 +1,12 @@
 package com.rlatneorp.fast_subway_exit.view
 
 import android.Manifest
-import android.content.ActivityNotFoundException // (추가)
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -21,20 +19,16 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rlatneorp.fast_subway_exit.R
-import com.rlatneorp.fast_subway_exit.model.ElevatorRow
+import com.rlatneorp.fast_subway_exit.model.ElevatorUIModel
 import com.rlatneorp.fast_subway_exit.viewmodel.Event
 import com.rlatneorp.fast_subway_exit.viewmodel.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
-import java.security.MessageDigest
 
-private const val COLOR_GREEN_HEX = "#4CAF50"
 private const val COLOR_PURPLE_HEX = "#6750A4"
-
 private const val EMAIL_ADDRESS = "rlatneorp@gmail.com"
 private const val EMAIL_SUBJECT = "승강기 앱 문의"
 private const val EMAIL_BODY = "문의 내용을 입력하세요:"
 private const val EMAIL_SCHEME = "mailto:"
-
 private const val MSG_ALL_WORKING = "보수중인 출구가 없습니다."
 private const val MSG_NO_RESULT_KEY = "검색 결과 없음"
 private const val MSG_NO_RESULT_TEXT = "검색 결과가 없습니다."
@@ -44,11 +38,11 @@ private const val MSG_PERMISSION_GRANTED = "위치 권한이 승인되었습니�
 private const val MSG_PERMISSION_REQUIRED = "위치 권한이 필요합니다."
 private const val MSG_PERMISSION_RATIONALE_LOAD = "현재 위치의 승강기 정보를 위해 위치 권한이 필요합니다."
 private const val MSG_PERMISSION_RATIONALE_CHECK = "현재 위치 기능을 위해 위치 권한이 필요합니다."
+private const val MSG_EMAIL_ERROR = "이메일 앱 실행 중 오류가 발생했습니다."
 
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
-
     private lateinit var elevatorAdapter: ElevatorAdapter
     private lateinit var searchButton: ImageButton
     private lateinit var inputSearchText: TextInputEditText
@@ -57,7 +51,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rvElevatorList: RecyclerView
     private lateinit var stationNameResult: TextView
     private lateinit var initialMessageText: TextView
-
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -67,35 +60,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        getAppKeyHash()
         initViews()
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
         checkLocationPermission()
-    }
-
-    private fun getAppKeyHash() {
-        try {
-            val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-                packageInfo.signingInfo?.apkContentsSigners ?: packageInfo.signingInfo?.signingCertificateHistory
-            } else {
-                @Suppress("DEPRECATION")
-                val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-                packageInfo.signatures
-            }
-
-            signatures?.forEach { signature ->
-                val md = MessageDigest.getInstance("SHA")
-                md.update(signature.toByteArray())
-                val keyHash = android.util.Base64.encodeToString(md.digest(), android.util.Base64.NO_WRAP)
-                Log.d("KeyHash", "현재 앱의 키 해시: $keyHash")
-            }
-        } catch (e: Exception) {
-            Log.e("KeyHash", "키 해시 구하기 실패", e)
-        }
     }
 
     private fun initViews() {
@@ -118,37 +87,27 @@ class MainActivity : AppCompatActivity() {
         viewModel.elevatorInfo.observe(this) { elevatorList ->
             handleElevatorInfoUpdate(elevatorList)
         }
-
         viewModel.allElevatorsWorking.observe(this) { isAllWorking ->
-            handleAllWorkingState(isAllWorking)
+            if (isAllWorking) {
+                showAllWorkingMessage()
+            }
         }
-
         viewModel.currentLocationName.observe(this) { name ->
             stationNameResult.text = name
         }
-
         viewModel.isLoading.observe(this) { isLoading ->
             handleLoadingUpdate(isLoading)
         }
-
         viewModel.errorMessage.observe(this) { event ->
             handleErrorMessage(event)
         }
-
         viewModel.navigateToEmail.observe(this) { event ->
             handleEmailNavigation(event)
         }
     }
 
-    private fun handleAllWorkingState(isAllWorking: Boolean) {
-        if (isAllWorking) {
-            showAllWorkingMessage()
-        }
-    }
-
-    private fun handleElevatorInfoUpdate(elevatorList: List<ElevatorRow>) {
+    private fun handleElevatorInfoUpdate(elevatorList: List<ElevatorUIModel>) {
         loadingLayout.visibility = View.GONE
-
         if (elevatorList.isNotEmpty()) {
             rvElevatorList.visibility = View.VISIBLE
             initialLayout.visibility = View.GONE
@@ -156,7 +115,6 @@ class MainActivity : AppCompatActivity() {
             elevatorAdapter.submitList(elevatorList)
             return
         }
-
         rvElevatorList.visibility = View.GONE
     }
 
@@ -165,14 +123,12 @@ class MainActivity : AppCompatActivity() {
         rvElevatorList.visibility = View.GONE
         initialLayout.visibility = View.VISIBLE
         stationNameResult.visibility = View.VISIBLE
-
         initialMessageText.text = MSG_ALL_WORKING
-        initialMessageText.setTextColor(Color.parseColor(COLOR_GREEN_HEX))
+        initialMessageText.setTextColor(Color.parseColor(COLOR_PURPLE_HEX))
     }
 
     private fun updateInitialMessage() {
         val defaultColor = Color.parseColor(COLOR_PURPLE_HEX)
-
         if (viewModel.currentLocationName.value == MSG_NO_RESULT_KEY) {
             initialMessageText.text = MSG_NO_RESULT_TEXT
             initialMessageText.setTextColor(defaultColor)
@@ -198,11 +154,9 @@ class MainActivity : AppCompatActivity() {
             val query = inputSearchText.text.toString()
             viewModel.searchStation(query)
         }
-
         findViewById<View>(R.id.mailButton).setOnClickListener {
             viewModel.onInquiryClicked()
         }
-
         findViewById<View>(R.id.currentLocationButton).setOnClickListener {
             checkLocationPermissionAndLoadData()
         }
@@ -213,13 +167,11 @@ class MainActivity : AppCompatActivity() {
             viewModel.fetchInfoForCurrentLocation()
             return
         }
-
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
             showToast(MSG_PERMISSION_RATIONALE_LOAD)
             requestLocationPermissions()
             return
         }
-
         requestLocationPermissions()
     }
 
@@ -227,11 +179,9 @@ class MainActivity : AppCompatActivity() {
         if (hasLocationPermission()) {
             return
         }
-
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
             showToast(MSG_PERMISSION_RATIONALE_CHECK)
         }
-
         requestLocationPermissions()
     }
 
@@ -251,7 +201,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    // (수정) try-catch로 변경하여 이메일 앱 실행 로직 강화
     private fun sendEmailInquiry() {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse(EMAIL_SCHEME)
@@ -259,13 +208,12 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_SUBJECT, EMAIL_SUBJECT)
             putExtra(Intent.EXTRA_TEXT, EMAIL_BODY)
         }
-
         try {
             startActivity(emailIntent)
         } catch (e: ActivityNotFoundException) {
             showToast(MSG_EMAIL_APP_NOT_FOUND)
         } catch (e: Exception) {
-            showToast("이메일 앱 실행 중 오류가 발생했습니다.")
+            showToast(MSG_EMAIL_ERROR)
         }
     }
 
@@ -274,12 +222,10 @@ class MainActivity : AppCompatActivity() {
             showToast(MSG_PERMISSION_GRANTED)
             return
         }
-
         if (permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)) {
             showToast(MSG_PERMISSION_GRANTED)
             return
         }
-
         showToast(MSG_PERMISSION_REQUIRED)
     }
 

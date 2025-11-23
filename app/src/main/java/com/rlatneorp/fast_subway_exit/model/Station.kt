@@ -25,3 +25,9 @@ data class ElevatorRow(
     @SerializedName("USE_YN")
     val runStatus: String
 )
+
+data class ElevatorUIModel(
+    val location: String,
+    val facilityName: String,
+    val runStatus: String
+)
