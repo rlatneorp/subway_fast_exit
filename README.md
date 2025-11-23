@@ -1,9 +1,9 @@
 
 ## 앱 모습
-<img width="590" height="662" alt="image" src="https://github.com/user-attachments/assets/22af7ebb-6f54-49e4-aaac-a654ee3deca4" />
+<img width="2151" height="2400" alt="Image" src="https://github.com/user-attachments/assets/fa0f30e2-80f4-43bd-9f64-998f4ed0a629" />
 
 ## 앱 아이콘
-<img width="315" height="266" alt="image" src="https://github.com/user-attachments/assets/b3dad593-8c29-45ad-ac16-4079499cc5f8" />
+<img width="2048" height="2048" alt="Image" src="https://github.com/user-attachments/assets/57e1fccf-1ded-4153-877b-f0612b377d9a" />
 
 ## 시연 영상
 https://tv.kakao.com/v/459381025
