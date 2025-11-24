@@ -155,7 +155,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp">
 
                 <LinearLayout
                     android:id="@+id/loadingLayout"
@@ -213,18 +214,25 @@
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     tools:listitem="@layout/item_elevator"
                     tools:visibility="gone"/>
-
             </FrameLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="자료제공 : 서울교통공사"
-                android:textSize="15sp"
-                android:textAlignment="textEnd"
-                android:layout_marginEnd="20dp"
-                android:layout_marginBottom="20dp"/>
         </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="* 검색결과는 가장 가까운 역으로 매칭됩니다"
+            android:textSize="15sp"
+            android:textAlignment="textEnd"
+            android:layout_marginEnd="20dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="자료제공 : 서울교통공사"
+            android:textSize="15sp"
+            android:textAlignment="textEnd"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
