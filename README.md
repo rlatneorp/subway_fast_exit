@@ -2,7 +2,7 @@
 <img width="1280" height="809" alt="Image" src="https://github.com/user-attachments/assets/0b727222-66b2-45d7-b530-f6c23335ccbf" />
 
 ## 구현된 앱 모습
-<img width="2151" height="2400" alt="Image" src="https://github.com/user-attachments/assets/fa0f30e2-80f4-43bd-9f64-998f4ed0a629" />
+<img width="2295" height="2400" alt="Image" src="https://github.com/user-attachments/assets/dc5d1b18-440d-4e24-9cb5-c87a8caa3c24" />
 
 ## 앱 아이콘
 <img width="764" height="764" alt="Image" src="https://github.com/user-attachments/assets/46ac2185-a06d-41f9-a152-6b54ce71f951" />
