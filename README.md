@@ -8,7 +8,7 @@
 <img width="764" height="764" alt="Image" src="https://github.com/user-attachments/assets/46ac2185-a06d-41f9-a152-6b54ce71f951" />
 
 ## 시연 영상
-https://tv.kakao.com/v/459479091
+[https://tv.kakao.com/v/459479091](https://tv.kakao.com/v/459485471)
 
 ## 기능구현 목록
 
